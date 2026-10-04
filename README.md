@@ -1,6 +1,6 @@
-# UILib 1.1.0 — Documentation
+# PorqueijjmzmUI 1.1.0 — Documentation
 
-A single-file UI library for Roblox. It includes a tabbed window, toggles, sliders, dropdowns, buttons, notifications, themes, mobile support (floating ball) and a 3D viewport (with a ready-made ESP preview).
+A single-file UI library for Roblox scripts. It includes a tabbed window, toggles, sliders, dropdowns, buttons, notifications, themes, mobile support (floating ball) and a 3D viewport (with a ready-made ESP preview).
 
 ## Table of contents
 
@@ -22,10 +22,10 @@ A single-file UI library for Roblox. It includes a tabbed window, toggles, slide
 
 ## 1. Loading the library
 
-Host `UILib.lua` somewhere that serves raw text (GitHub raw, for example) and load it with `loadstring`:
+The library is hosted on GitHub as `main.luau`. Load it with `loadstring`:
 
 ```lua
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/UILib.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/porqueijjmzm1/PorqUi/refs/heads/main/main.luau"))()
 ```
 
 The script ends with `return Library`, so the value returned by `loadstring` is the library itself.
@@ -37,7 +37,7 @@ The script ends with `return Library`, so the value returned by `loadstring` is 
 ## 2. Quick start
 
 ```lua
-local Library = loadstring(game:HttpGet("YOUR_RAW_URL"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/porqueijjmzm1/PorqUi/refs/heads/main/main.luau"))()
 
 local Window = Library:CreateWindow({
     Name = "My Hub",
