@@ -1,5 +1,4 @@
--- check my rscript for more
-
+-- check rscripts.porqueijjmzm for more cool shi
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local TextService = game:GetService("TextService")
@@ -1888,46 +1887,132 @@ local Library = (function()
 		local window = self.Window
 
 		local viewport = self:CreateViewport({
-			Name = opts.Name or "ESP Preview",
 			Height = opts.Height or 250,
 			FieldOfView = 35,
-			Rotate = true,
-			RotateSpeed = 0.6,
+			Rotate = opts.Rotate ~= false,
+			RotateSpeed = opts.RotateSpeed or 0.6,
 		})
 		viewport:SetModel(opts.Model or Library.CreateDummy())
+
+		local card = viewport.Card
+		Theme:Bind(card, {})
+		card.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+
+		Util.Create("TextLabel", {
+			BackgroundTransparency = 1,
+			Font = Util.Fonts.Medium,
+			Text = opts.Name or "ESP Preview",
+			TextSize = 12,
+			TextColor3 = Color3.fromRGB(150, 150, 160),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			Position = UDim2.fromOffset(10, 6),
+			Size = UDim2.new(1, -20, 0, 16),
+			ZIndex = 6,
+			Parent = card,
+		})
 
 		local overlay = Util.Create("Frame", {
 			Name = "EspOverlay",
 			BackgroundTransparency = 1,
 			Size = UDim2.fromScale(1, 1),
 			ZIndex = 3,
-			Parent = viewport.Card,
+			Parent = card,
 		})
 
-		local hint = makeLabel(overlay, {
+		local hint = Util.Create("TextLabel", {
+			BackgroundTransparency = 1,
+			Font = Util.Fonts.Medium,
 			Text = "Enable ESP to see the preview",
-			Color = "SubText",
 			TextSize = 12,
-			Align = Enum.TextXAlignment.Center,
+			TextColor3 = Color3.fromRGB(150, 150, 160),
 			Size = UDim2.fromScale(1, 1),
+			ZIndex = 4,
+			Visible = false,
+			Parent = overlay,
 		})
-		hint.ZIndex = 4
-		hint.Visible = false
 
-		local colorMap = {
-			["Red"] = Color3.fromRGB(255, 70, 70),
-			["Green"] = Color3.fromRGB(70, 255, 110),
-			["Blue"] = Color3.fromRGB(70, 150, 255),
-			["White"] = Color3.fromRGB(255, 255, 255),
+		local map = {
+			Enabled = "EspEnabled",
+			Box = "EspBoxes",
+			BoxStyle = "EspBoxStyle",
+			BoxFill = "EspBoxFill",
+			Name = "EspNames",
+			Health = "EspHealth",
+			HealthText = "EspHealthText",
+			Distance = "EspDistance",
+			Weapon = "EspWeapon",
+			HeadDot = "EspHeadDot",
+			Tracer = "EspTracers",
+			TracerOrigin = "EspTracerOrigin",
+			Skeleton = "EspSkeleton",
+			Color = "EspColor",
+			Thickness = "EspThickness",
+			Alpha = "EspAlpha",
 		}
+		for key, name in pairs(opts.Map or {}) do
+			map[key] = name
+		end
 
-		local function flag(name, default)
+		local function read(key)
+			local name = map[key]
+			if not name then
+				return nil
+			end
+			if typeof(opts.Get) == "function" then
+				local ok, value = pcall(opts.Get, key, name)
+				if ok then
+					return value
+				end
+				return nil
+			end
+			if typeof(opts.Settings) == "table" then
+				return opts.Settings[name]
+			end
 			local f = window.Flags[name]
 			if f == nil then
-				return default
+				return nil
 			end
 			return f.Value
 		end
+
+		local function on(key)
+			local v = read(key)
+			return v ~= nil and v ~= false
+		end
+
+		local function norm(value)
+			return typeof(value) == "string" and string.lower(value) or ""
+		end
+
+		local namedColors = {
+			red = Color3.fromRGB(255, 70, 70),
+			green = Color3.fromRGB(70, 255, 110),
+			blue = Color3.fromRGB(70, 150, 255),
+			white = WHITE,
+			yellow = Color3.fromRGB(255, 235, 80),
+			orange = Color3.fromRGB(255, 165, 60),
+			purple = Color3.fromRGB(170, 100, 255),
+			pink = Color3.fromRGB(255, 120, 200),
+			cyan = Color3.fromRGB(80, 230, 255),
+		}
+
+		local function resolveColor(t)
+			local value = read("Color")
+			if typeof(value) == "Color3" then
+				return value
+			end
+			local name = norm(value)
+			if name == "rainbow" or name == "rgb" then
+				return Color3.fromHSV((t * 0.25) % 1, 1, 1)
+			end
+			return namedColors[name] or WHITE
+		end
+
+		local sample = opts.Sample or {}
+		local sampleName = sample.Name
+			or (Players.LocalPlayer and Players.LocalPlayer.DisplayName)
+			or "Player"
+		local sampleWeapon = sample.Weapon or "AK-47"
 
 		local function newFrame()
 			return Util.Create("Frame", {
@@ -1938,12 +2023,19 @@ local Library = (function()
 			})
 		end
 
+		local function newLine()
+			local line = newFrame()
+			line.AnchorPoint = Vector2.new(0.5, 0.5)
+			return line
+		end
+
 		local function newText(textSize)
 			return Util.Create("TextLabel", {
 				BackgroundTransparency = 1,
-				Font = Util.Fonts.Bold,
+				Font = Util.Fonts.Regular,
 				TextSize = textSize,
-				TextStrokeTransparency = 0.5,
+				TextColor3 = WHITE,
+				TextStrokeTransparency = 0.4,
 				ZIndex = 5,
 				Visible = false,
 				Parent = overlay,
@@ -1960,6 +2052,9 @@ local Library = (function()
 			line.Visible = true
 		end
 
+		local boxFill = newFrame()
+		boxFill.ZIndex = 3
+
 		local box = Util.Create("Frame", {
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
@@ -1967,7 +2062,7 @@ local Library = (function()
 			Visible = false,
 			Parent = overlay,
 		})
-		local boxStroke = Util.Stroke(box, 1.5, WHITE)
+		local boxStroke = Util.Stroke(box, 1, WHITE)
 
 		local cornerPieces = {}
 		for i = 1, 8 do
@@ -1976,41 +2071,60 @@ local Library = (function()
 
 		local edges = {}
 		for i = 1, 12 do
-			local line = newFrame()
-			line.AnchorPoint = Vector2.new(0.5, 0.5)
-			edges[i] = line
+			edges[i] = newLine()
 		end
 
 		local skeletonLines = {}
 		for i = 1, 10 do
-			local line = newFrame()
-			line.AnchorPoint = Vector2.new(0.5, 0.5)
-			skeletonLines[i] = line
+			skeletonLines[i] = newLine()
 		end
 
-		local tracer = newFrame()
-		tracer.AnchorPoint = Vector2.new(0.5, 0.5)
+		local tracer = newLine()
 
-		local nameLabel = newText(13)
+		local headDot = Util.Create("Frame", {
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 4,
+			Visible = false,
+			Parent = overlay,
+		})
+		Util.Corner(headDot, UDim.new(0.5, 0))
+		local headDotStroke = Util.Stroke(headDot, 1, WHITE)
+
+		local nameLabel = newText(12)
 		nameLabel.AnchorPoint = Vector2.new(0.5, 1)
-		nameLabel.Size = UDim2.fromOffset(200, 14)
-		nameLabel.Text = Players.LocalPlayer and Players.LocalPlayer.DisplayName or "Player"
+		nameLabel.Size = UDim2.fromOffset(200, 12)
+		nameLabel.Text = sampleName
 
 		local distLabel = newText(12)
 		distLabel.AnchorPoint = Vector2.new(0.5, 0)
-		distLabel.Size = UDim2.fromOffset(120, 14)
+		distLabel.Size = UDim2.fromOffset(120, 12)
+
+		local weaponLabel = newText(12)
+		weaponLabel.AnchorPoint = Vector2.new(0.5, 0)
+		weaponLabel.Size = UDim2.fromOffset(160, 12)
+		weaponLabel.Text = sampleWeapon
 
 		local healthBg = newFrame()
 		healthBg.BackgroundColor3 = Color3.new(0, 0, 0)
 		local healthFill = newFrame()
 		healthFill.ZIndex = 5
+		local healthText = newText(10)
+		healthText.AnchorPoint = Vector2.new(1, 0.5)
+		healthText.Size = UDim2.fromOffset(30, 10)
+		healthText.TextXAlignment = Enum.TextXAlignment.Right
 
 		local function hideAll()
+			boxFill.Visible = false
 			box.Visible = false
+			headDot.Visible = false
 			nameLabel.Visible = false
 			distLabel.Visible = false
+			weaponLabel.Visible = false
 			healthBg.Visible = false
 			healthFill.Visible = false
+			healthText.Visible = false
 			tracer.Visible = false
 			for _, f in ipairs(cornerPieces) do
 				f.Visible = false
@@ -2041,7 +2155,7 @@ local Library = (function()
 		end
 
 		viewport:OnRender(function()
-			if not flag("EspEnabled", true) then
+			if read("Enabled") == false then
 				hideAll()
 				hint.Visible = true
 				return
@@ -2049,14 +2163,9 @@ local Library = (function()
 			hint.Visible = false
 
 			local t = os.clock()
-			local colorName = flag("EspColor", "Red")
-			local color
-			if colorName == "Rainbow" then
-				color = Color3.fromHSV((t * 0.25) % 1, 1, 1)
-			else
-				color = colorMap[colorName] or colorMap["Red"]
-			end
-			local alpha = math.clamp(flag("EspAlpha", 0), 0, 0.95)
+			local color = resolveColor(t)
+			local alpha = math.clamp(tonumber(read("Alpha")) or 0, 0, 0.95)
+			local thickness = math.clamp(tonumber(read("Thickness")) or opts.Thickness or 1, 1, 4)
 
 			local center, bounds = viewport.Center, viewport.Size
 			local half = Vector3.new(bounds.X, bounds.Y, bounds.X * 0.5) / 2
@@ -2076,20 +2185,31 @@ local Library = (function()
 			local x, y, w, h = minX, minY, maxX - minX, maxY - minY
 			local overlaySize = overlay.AbsoluteSize
 
-			local boxStyle = flag("EspBoxStyle", "Corners")
-			local showBoxes = flag("EspBoxes", false)
-			box.Visible = showBoxes and boxStyle == "Full"
+			boxFill.Visible = on("BoxFill")
+			if boxFill.Visible then
+				boxFill.Position = UDim2.fromOffset(x, y)
+				boxFill.Size = UDim2.fromOffset(w, h)
+				boxFill.BackgroundColor3 = color
+				boxFill.BackgroundTransparency = 0.88 + 0.12 * alpha
+			end
+
+			local style = norm(read("BoxStyle"))
+			local isCorners = style:find("corner") ~= nil
+			local is3d = style:find("3d") ~= nil
+			local showBox = on("Box")
+
+			box.Visible = showBox and not isCorners and not is3d
 			if box.Visible then
 				box.Position = UDim2.fromOffset(x, y)
 				box.Size = UDim2.fromOffset(w, h)
 				boxStroke.Color = color
+				boxStroke.Thickness = thickness
 				boxStroke.Transparency = alpha
 			end
 
-			local showCorners = showBoxes and boxStyle == "Corners"
-			if showCorners then
-				local len = math.max(6, math.min(w, h) * 0.22)
-				local th = 2
+			if showBox and isCorners then
+				local len = math.max(6, math.min(w, h) * 0.2)
+				local th = thickness
 				local pieces = {
 					{ x, y, len, th }, { x, y, th, len },
 					{ x + w - len, y, len, th }, { x + w - th, y, th, len },
@@ -2110,69 +2230,104 @@ local Library = (function()
 				end
 			end
 
-			local show3d = showBoxes and boxStyle == "3D"
 			for i, f in ipairs(edges) do
-				if show3d then
+				if showBox and is3d then
 					local pair = EDGE_PAIRS[i]
-					setLine(f, projected[pair[1]], projected[pair[2]], color, 1.5, alpha)
+					setLine(f, projected[pair[1]], projected[pair[2]], color, thickness, alpha)
 				else
 					f.Visible = false
 				end
 			end
 
-			nameLabel.Visible = flag("EspNames", false)
+			nameLabel.Visible = on("Name")
 			if nameLabel.Visible then
-				nameLabel.Position = UDim2.fromOffset(x + w / 2, y - 3)
+				nameLabel.Position = UDim2.fromOffset(x + w / 2, y - 2)
 				nameLabel.TextColor3 = color
 				nameLabel.TextTransparency = alpha
 			end
 
-			distLabel.Visible = flag("EspDistance", false)
+			local belowY = y + h + 2
+			distLabel.Visible = on("Distance")
 			if distLabel.Visible then
-				distLabel.Position = UDim2.fromOffset(x + w / 2, y + h + 3)
-				distLabel.Text = string.format("%d studs", 60 + math.floor(25 * math.sin(t * 0.5)))
+				local studs = sample.Distance or (60 + math.floor(25 * math.sin(t * 0.5)))
+				distLabel.Position = UDim2.fromOffset(x + w / 2, belowY)
+				distLabel.Text = string.format("%dm", math.floor(studs))
 				distLabel.TextColor3 = color
 				distLabel.TextTransparency = alpha
+				belowY += 12
 			end
 
-			local showHealth = flag("EspHealth", false)
+			weaponLabel.Visible = on("Weapon")
+			if weaponLabel.Visible then
+				weaponLabel.Position = UDim2.fromOffset(x + w / 2, belowY)
+				weaponLabel.TextColor3 = color
+				weaponLabel.TextTransparency = alpha
+			end
+
+			local showHealth = on("Health")
 			healthBg.Visible = showHealth
 			healthFill.Visible = showHealth
+			healthText.Visible = showHealth and on("HealthText")
 			if showHealth then
-				local hp = 0.65 + 0.35 * math.sin(t * 0.9)
-				healthBg.Position = UDim2.fromOffset(x - 7, y)
-				healthBg.Size = UDim2.fromOffset(4, h)
-				healthBg.BackgroundTransparency = 0.45
-				healthFill.Position = UDim2.fromOffset(x - 6, y + 1 + (h - 2) * (1 - hp))
-				healthFill.Size = UDim2.fromOffset(2, (h - 2) * hp)
-				healthFill.BackgroundColor3 = Color3.fromRGB(255, 60, 60):Lerp(Color3.fromRGB(60, 255, 100), hp)
+				local hp = sample.Health or (0.65 + 0.35 * math.sin(t * 0.9))
+				hp = math.clamp(hp, 0, 1)
+				local barX = x - 4 - thickness
+				healthBg.Position = UDim2.fromOffset(barX - 1, y - 1)
+				healthBg.Size = UDim2.fromOffset(thickness + 2, h + 2)
+				healthBg.BackgroundTransparency = 0.4
+				healthFill.Position = UDim2.fromOffset(barX, y + h * (1 - hp))
+				healthFill.Size = UDim2.fromOffset(thickness, h * hp)
+				healthFill.BackgroundColor3 = typeof(opts.HealthColor) == "Color3" and opts.HealthColor
+					or Color3.fromRGB(255, 60, 60):Lerp(Color3.fromRGB(60, 255, 100), hp)
 				healthFill.BackgroundTransparency = alpha
+				if healthText.Visible then
+					healthText.Position = UDim2.fromOffset(barX - 3, y + h * (1 - hp))
+					healthText.Text = tostring(math.floor(hp * 100 + 0.5))
+					healthText.TextTransparency = alpha
+				end
 			end
 
-			if flag("EspTracers", false) then
-				local origin = flag("EspTracerOrigin", "Bottom")
+			if on("Tracer") then
+				local origin = norm(read("TracerOrigin"))
 				local from
-				if origin == "Middle" then
-					from = Vector2.new(overlaySize.X / 2, overlaySize.Y / 2)
-				elseif origin == "Mouse" then
+				if origin:find("mouse") or origin:find("cursor") then
 					from = UserInputService:GetMouseLocation() - overlay.AbsolutePosition
+				elseif origin:find("mid") or origin:find("center") then
+					from = Vector2.new(overlaySize.X / 2, overlaySize.Y / 2)
+				elseif origin:find("top") then
+					from = Vector2.new(overlaySize.X / 2, 0)
 				else
 					from = Vector2.new(overlaySize.X / 2, overlaySize.Y)
 				end
-				setLine(tracer, from, Vector2.new(x + w / 2, y + h), color, 1.5, alpha)
+				setLine(tracer, from, Vector2.new(x + w / 2, y + h), color, thickness, alpha)
 			else
 				tracer.Visible = false
 			end
 
 			local model = viewport.Model
-			local showSkeleton = flag("EspSkeleton", false)
 			local torsoPart = model and model:FindFirstChild("Torso")
 			local headPart = model and model:FindFirstChild("Head")
 			local lArm = model and model:FindFirstChild("Left Arm")
 			local rArm = model and model:FindFirstChild("Right Arm")
 			local lLeg = model and model:FindFirstChild("Left Leg")
 			local rLeg = model and model:FindFirstChild("Right Leg")
-			if showSkeleton and torsoPart and headPart and lArm and rArm and lLeg and rLeg then
+
+			headDot.Visible = false
+			if on("HeadDot") and headPart then
+				local p1 = viewport:Project(headPart.Position)
+				local p2 = viewport:Project(headPart.Position + Vector3.new(headPart.Size.Y * 0.5, 0, 0))
+				if p1 and p2 then
+					local radius = math.max(2, (p2 - p1).Magnitude)
+					headDot.Position = UDim2.fromOffset(p1.X, p1.Y)
+					headDot.Size = UDim2.fromOffset(radius * 2, radius * 2)
+					headDotStroke.Color = color
+					headDotStroke.Thickness = thickness
+					headDotStroke.Transparency = alpha
+					headDot.Visible = true
+				end
+			end
+
+			if on("Skeleton") and torsoPart and headPart and lArm and rArm and lLeg and rLeg then
 				local tcf = torsoPart.CFrame
 				local pts = {
 					head = headPart.Position,
@@ -2198,7 +2353,7 @@ local Library = (function()
 					local a = viewport:Project(pts[links[i][1]])
 					local b = viewport:Project(pts[links[i][2]])
 					if a and b then
-						setLine(line, a, b, color, 1.5, alpha)
+						setLine(line, a, b, color, thickness, alpha)
 					else
 						line.Visible = false
 					end
@@ -2216,6 +2371,7 @@ local Library = (function()
 	return Library
 end)()
 
-Library.Version = "1.1.0"
+Library.Version = "1.2.0"
 
 return Library
+
