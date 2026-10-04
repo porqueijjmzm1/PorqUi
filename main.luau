@@ -1,5 +1,4 @@
--- check my rscripts: porqueijjmzm
--- go to read.md for documentation
+-- check my rscript for more
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -243,7 +242,7 @@ local Theme = (function()
 	function Theme:Set(name)
 		local theme = self.Themes[name]
 		if not theme then
-			warn("[UILib] Tema inexistente: " .. tostring(name))
+			warn("[UILib] Unknown theme: " .. tostring(name))
 			return false
 		end
 		self.CurrentName = name
@@ -695,7 +694,7 @@ local Library = (function()
 		end
 		local ok, err = pcall(callback, ...)
 		if not ok then
-			warn("[UILib] Erro no callback: " .. tostring(err))
+			warn("[UILib] Callback error: " .. tostring(err))
 		end
 	end
 
@@ -1095,11 +1094,11 @@ local Library = (function()
 	end
 
 	function Window:Task(title, fn)
-		local handle = self.Notifications:Loading({ Title = title, Content = "Aguarde..." })
+		local handle = self.Notifications:Loading({ Title = title, Content = "Please wait..." })
 		task.spawn(function()
 			local ok, err = pcall(fn)
 			if ok then
-				handle:Update({ Type = "Success", Title = title, Content = "Concluído com sucesso.", Duration = 3 })
+				handle:Update({ Type = "Success", Title = title, Content = "Completed successfully.", Duration = 3 })
 			else
 				handle:Update({ Type = "Error", Title = title, Content = tostring(err), Duration = 5 })
 			end
@@ -1248,7 +1247,7 @@ local Library = (function()
 			Parent = self.Page,
 		})
 		local lbl = makeLabel(holder, {
-			Text = string.upper(name or "Seção"),
+			Text = string.upper(name or "Section"),
 			Bold = true,
 			TextSize = 11,
 			Color = "SubText",
@@ -1283,7 +1282,7 @@ local Library = (function()
 		Util.Padding(c, 12, 10, 12, 10)
 		Util.Create("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, Parent = c })
 
-		local title = makeLabel(c, { Text = opts.Title or "Título", Bold = true, Size = UDim2.new(1, 0, 0, 18) })
+		local title = makeLabel(c, { Text = opts.Title or "Title", Bold = true, Size = UDim2.new(1, 0, 0, 18) })
 		title.LayoutOrder = 1
 		local body = makeLabel(c, {
 			Text = opts.Content or "",
@@ -1310,7 +1309,7 @@ local Library = (function()
 
 		local textX = cardIcon(c, opts.Icon == nil and "click" or opts.Icon)
 		makeLabel(c, {
-			Text = opts.Name or "Botão",
+			Text = opts.Name or "Button",
 			Position = UDim2.fromOffset(textX, 0),
 			Size = UDim2.new(1, -(textX + 28), 1, 0),
 		})
@@ -1587,7 +1586,7 @@ local Library = (function()
 				row.TextColor3 = selected and Theme.Current.Accent or Theme.Current.Text
 				row.Font = selected and Util.Fonts.Bold or Util.Fonts.Medium
 			end
-			selectedLabel.Text = tostring(object.Value or "Selecionar")
+			selectedLabel.Text = tostring(object.Value or "Select")
 		end
 
 		local function toggle(open)
@@ -1671,7 +1670,7 @@ local Library = (function()
 			Position = UDim2.new(0, 12, 0.5, 0),
 		})
 		local text = makeLabel(c, {
-			Text = opts.Name or "Carregando...",
+			Text = opts.Name or "Loading...",
 			Position = UDim2.fromOffset(44, 0),
 			Size = UDim2.new(1, -56, 1, 0),
 		})
@@ -1683,7 +1682,7 @@ local Library = (function()
 		function object:Finish(newText)
 			spinner:Destroy()
 			text.Position = UDim2.fromOffset(12, 0)
-			text.Text = newText or "Concluído"
+			text.Text = newText or "Done"
 		end
 		function object:Destroy()
 			spinner:Destroy()
@@ -1872,7 +1871,7 @@ local Library = (function()
 			for _, fn in ipairs(callbacks) do
 				local ok, err = pcall(fn, dt, object)
 				if not ok then
-					warn("[UILib] Erro no OnRender: " .. tostring(err))
+					warn("[UILib] OnRender error: " .. tostring(err))
 				end
 			end
 		end))
@@ -1906,7 +1905,7 @@ local Library = (function()
 		})
 
 		local hint = makeLabel(overlay, {
-			Text = "Ative o ESP para ver o preview",
+			Text = "Enable ESP to see the preview",
 			Color = "SubText",
 			TextSize = 12,
 			Align = Enum.TextXAlignment.Center,
@@ -1916,10 +1915,10 @@ local Library = (function()
 		hint.Visible = false
 
 		local colorMap = {
-			["Vermelho"] = Color3.fromRGB(255, 70, 70),
-			["Verde"] = Color3.fromRGB(70, 255, 110),
-			["Azul"] = Color3.fromRGB(70, 150, 255),
-			["Branco"] = Color3.fromRGB(255, 255, 255),
+			["Red"] = Color3.fromRGB(255, 70, 70),
+			["Green"] = Color3.fromRGB(70, 255, 110),
+			["Blue"] = Color3.fromRGB(70, 150, 255),
+			["White"] = Color3.fromRGB(255, 255, 255),
 		}
 
 		local function flag(name, default)
@@ -1995,7 +1994,7 @@ local Library = (function()
 		local nameLabel = newText(13)
 		nameLabel.AnchorPoint = Vector2.new(0.5, 1)
 		nameLabel.Size = UDim2.fromOffset(200, 14)
-		nameLabel.Text = Players.LocalPlayer and Players.LocalPlayer.DisplayName or "Jogador"
+		nameLabel.Text = Players.LocalPlayer and Players.LocalPlayer.DisplayName or "Player"
 
 		local distLabel = newText(12)
 		distLabel.AnchorPoint = Vector2.new(0.5, 0)
@@ -2050,12 +2049,12 @@ local Library = (function()
 			hint.Visible = false
 
 			local t = os.clock()
-			local colorName = flag("EspColor", "Vermelho")
+			local colorName = flag("EspColor", "Red")
 			local color
-			if colorName == "Arco-íris" then
+			if colorName == "Rainbow" then
 				color = Color3.fromHSV((t * 0.25) % 1, 1, 1)
 			else
-				color = colorMap[colorName] or colorMap["Vermelho"]
+				color = colorMap[colorName] or colorMap["Red"]
 			end
 			local alpha = math.clamp(flag("EspAlpha", 0), 0, 0.95)
 
@@ -2077,9 +2076,9 @@ local Library = (function()
 			local x, y, w, h = minX, minY, maxX - minX, maxY - minY
 			local overlaySize = overlay.AbsoluteSize
 
-			local boxStyle = flag("EspBoxStyle", "Cantos")
+			local boxStyle = flag("EspBoxStyle", "Corners")
 			local showBoxes = flag("EspBoxes", false)
-			box.Visible = showBoxes and boxStyle == "Completa"
+			box.Visible = showBoxes and boxStyle == "Full"
 			if box.Visible then
 				box.Position = UDim2.fromOffset(x, y)
 				box.Size = UDim2.fromOffset(w, h)
@@ -2087,7 +2086,7 @@ local Library = (function()
 				boxStroke.Transparency = alpha
 			end
 
-			local showCorners = showBoxes and boxStyle == "Cantos"
+			local showCorners = showBoxes and boxStyle == "Corners"
 			if showCorners then
 				local len = math.max(6, math.min(w, h) * 0.22)
 				local th = 2
@@ -2151,9 +2150,9 @@ local Library = (function()
 			end
 
 			if flag("EspTracers", false) then
-				local origin = flag("EspTracerOrigin", "Embaixo")
+				local origin = flag("EspTracerOrigin", "Bottom")
 				local from
-				if origin == "Meio" then
+				if origin == "Middle" then
 					from = Vector2.new(overlaySize.X / 2, overlaySize.Y / 2)
 				elseif origin == "Mouse" then
 					from = UserInputService:GetMouseLocation() - overlay.AbsolutePosition
@@ -2220,4 +2219,3 @@ end)()
 Library.Version = "1.1.0"
 
 return Library
-
