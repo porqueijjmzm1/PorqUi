@@ -1,6 +1,6 @@
-# PorqueijjmzmUI 1.1.0 — Documentation
+# porqueijjmzmUI 1.2.0 — Documentation
 
-A single-file UI library for Roblox scripts. It includes a tabbed window, toggles, sliders, dropdowns, buttons, notifications, themes, mobile support (floating ball) and a 3D viewport (with a ready-made ESP preview).
+A single-file UI library for Roblox. It includes a tabbed window, toggles, sliders, dropdowns, buttons, notifications, themes, mobile support (floating ball) and a 3D viewport (with a ready-made ESP preview).
 
 ## Table of contents
 
@@ -409,25 +409,81 @@ view:SetModel(dummy)
 
 ## 12. ESP Preview
 
-`Tab:CreateEspPreview(opts)` shows a spinning 3D dummy with ESP elements drawn on top (box, name, health, distance, tracer and skeleton). It is only a **visual preview**: it does nothing in the game.
+`Tab:CreateEspPreview(opts)` shows a spinning 3D dummy with thin, white ESP elements drawn on top. It is only a **visual preview**: it does nothing in the game.
 
-Options: `Name` (default `"ESP Preview"`), `Height` (default `250`) and `Model` (default: `Library.CreateDummy()`). It returns the same object as `CreateViewport`.
+The preview is built to mirror **your** ESP. An element is drawn **only if the developer provides a setting for it**: if you do not create a "Head dot" control, no head dot ever appears in the preview. Everything is white and 1px thin by default; it only changes color or thickness if your script has those settings.
 
-The preview reads these window **flags** every frame. Create the controls with these names and the preview reacts instantly:
+Options:
 
-| Flag | Type | Effect |
+| Field | Default | Description |
 |---|---|---|
-| `EspEnabled` | toggle | Turns the whole preview on/off. (If the flag does not exist, it stays on.) |
-| `EspBoxes` | toggle | Shows the box. |
-| `EspBoxStyle` | dropdown | `"Full"`, `"Corners"` or `"3D"`. |
-| `EspNames` | toggle | Shows the name. |
-| `EspHealth` | toggle | Health bar (sample value that oscillates). |
-| `EspDistance` | toggle | Distance (sample value). |
-| `EspTracers` | toggle | Line from the origin point to the dummy. |
-| `EspTracerOrigin` | dropdown | `"Bottom"`, `"Middle"` or `"Mouse"`. |
-| `EspSkeleton` | toggle | Skeleton (needs the default dummy or a model with the R6 part names). |
-| `EspColor` | dropdown | `"Red"`, `"Green"`, `"Blue"`, `"White"` or `"Rainbow"`. |
-| `EspAlpha` | slider 0 to 1 | Transparency of the elements. |
+| `Name` | `"ESP Preview"` | Small title on the card. |
+| `Height` | `250` | Card height in pixels. |
+| `Model` | `Library.CreateDummy()` | Model shown in the preview. |
+| `Rotate`, `RotateSpeed` | `true`, `0.6` | Auto rotation. |
+| `Map` | see below | Maps preview elements to **your** flag names. |
+| `Settings` | none | A table (your ESP settings) to read values from instead of `Window.Flags`. |
+| `Get` | none | A function `Get(key, name)` that returns the value for an element. Overrides `Settings` and `Window.Flags`. |
+| `Sample` | none | Sample data: `{ Name, Weapon, Distance, Health }` (`Health` is 0 to 1). If omitted, the name is the local player's, the distance and health are animated. |
+| `Thickness` | `1` | Line thickness (1 to 4) when you have no thickness setting. |
+| `HealthColor` | green to red | A `Color3` to force a fixed health bar color. |
+
+It returns the same object as `CreateViewport`.
+
+### Elements and default flag names
+
+The preview reads these every frame. If a flag does not exist, that element is not drawn.
+
+| Element (`Map` key) | Default flag | Value | What it draws |
+|---|---|---|---|
+| `Enabled` | `EspEnabled` | boolean | Master switch. If the flag does not exist, the preview stays on. |
+| `Box` | `EspBoxes` | boolean | Box. |
+| `BoxStyle` | `EspBoxStyle` | string | Contains `"corner"` for corner box, `"3d"` for a 3D box, anything else for a full box (case-insensitive). |
+| `BoxFill` | `EspBoxFill` | boolean | Faint fill inside the box. |
+| `Name` | `EspNames` | boolean | Name above the box. |
+| `Health` | `EspHealth` | boolean | Thin health bar on the left. |
+| `HealthText` | `EspHealthText` | boolean | Health number next to the bar (needs `Health`). |
+| `Distance` | `EspDistance` | boolean | Distance under the box. |
+| `Weapon` | `EspWeapon` | boolean | Weapon name under the box. |
+| `HeadDot` | `EspHeadDot` | boolean | Thin circle around the head. |
+| `Tracer` | `EspTracers` | boolean | Line to the bottom of the box. |
+| `TracerOrigin` | `EspTracerOrigin` | string | Contains `"bottom"`, `"mid"`/`"center"`, `"top"` or `"mouse"`/`"cursor"` (case-insensitive). |
+| `Skeleton` | `EspSkeleton` | boolean | Skeleton lines (default dummy or a model with R6 part names). |
+| `Color` | `EspColor` | `Color3` or string | `Color3`, or `"red"`, `"green"`, `"blue"`, `"white"`, `"yellow"`, `"orange"`, `"purple"`, `"pink"`, `"cyan"`, `"rainbow"`. Default: white. |
+| `Thickness` | `EspThickness` | number | Line thickness (1 to 4). Default: 1. |
+| `Alpha` | `EspAlpha` | number 0 to 1 | Transparency of all elements. |
+
+### Using your own flag names
+
+If your menu already uses different flag names, map them. Set a key to `false` to disable that element entirely.
+
+```lua
+Esp:CreateEspPreview({
+    Map = {
+        Box = "BoxESP",
+        Name = "NameESP",
+        Health = "HealthBar",
+        HeadDot = "HeadCircle",
+        Skeleton = false,
+    },
+})
+```
+
+### Reading your real ESP settings
+
+To keep the preview exactly in sync with the table your ESP loop uses, pass it as `Settings` (keys are the flag names from the map), or use `Get`:
+
+```lua
+local ESP = { EspEnabled = true, EspBoxes = true, EspNames = true, EspHeadDot = true }
+
+Esp:CreateEspPreview({ Settings = ESP })
+
+Esp:CreateEspPreview({
+    Get = function(key, name)
+        return MyEsp.Config[key]
+    end,
+})
+```
 
 ### Full example
 
@@ -438,24 +494,23 @@ Esp:CreateSection("Preview")
 Esp:CreateEspPreview({ Height = 250 })
 
 Esp:CreateSection("Elements")
-Esp:CreateToggle({ Name = "ESP",        Flag = "EspEnabled",  CurrentValue = true })
-Esp:CreateToggle({ Name = "Boxes",      Flag = "EspBoxes",    CurrentValue = true })
-Esp:CreateToggle({ Name = "Names",      Flag = "EspNames",    CurrentValue = true })
-Esp:CreateToggle({ Name = "Health bar", Flag = "EspHealth",   CurrentValue = true })
+Esp:CreateToggle({ Name = "ESP",        Flag = "EspEnabled", CurrentValue = true })
+Esp:CreateToggle({ Name = "Boxes",      Flag = "EspBoxes",   CurrentValue = true })
+Esp:CreateToggle({ Name = "Names",      Flag = "EspNames",   CurrentValue = true })
+Esp:CreateToggle({ Name = "Health bar", Flag = "EspHealth",  CurrentValue = true })
 Esp:CreateToggle({ Name = "Distance",   Flag = "EspDistance" })
+Esp:CreateToggle({ Name = "Head dot",   Flag = "EspHeadDot" })
 Esp:CreateToggle({ Name = "Tracers",    Flag = "EspTracers" })
 Esp:CreateToggle({ Name = "Skeleton",   Flag = "EspSkeleton" })
 
 Esp:CreateSection("Style")
 Esp:CreateDropdown({ Name = "Box style", Flag = "EspBoxStyle",
     Options = { "Full", "Corners", "3D" }, CurrentOption = "Corners" })
-Esp:CreateDropdown({ Name = "Color", Flag = "EspColor",
-    Options = { "Red", "Green", "Blue", "White", "Rainbow" }, CurrentOption = "Red" })
 Esp:CreateDropdown({ Name = "Tracer origin", Flag = "EspTracerOrigin",
     Options = { "Bottom", "Middle", "Mouse" }, CurrentOption = "Bottom" })
-Esp:CreateSlider({ Name = "Transparency", Flag = "EspAlpha",
-    Range = { 0, 1 }, Increment = 0.05, CurrentValue = 0.2 })
 ```
+
+In this example there is no color, weapon or fill setting, so the preview stays white and shows none of those.
 
 ---
 
